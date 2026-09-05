@@ -1,0 +1,8 @@
+[package]
+name = "proctree"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Build process trees from streamed start/exit events without loading the whole log into memory"
+
+[dependencies]
