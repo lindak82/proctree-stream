@@ -78,13 +78,40 @@ arena and links them by index (pid -> index of the currently live
 process with that pid), which also means a reused pid doesn't get
 confused with its predecessor.
 
+## Pruning finished subtrees
+
+The tree keeps every process it has seen until you tell it to let go.
+Call `ProcessTree::prune_finished` periodically while consuming a
+long-running stream and it will drop any subtree where the process and
+every descendant have exited — freeing the names and child lists, and
+recycling the slot for a future `start`. A process that runs for the
+life of the log is never pruned (its subtree is never "finished"), but
+short-lived subtrees under it no longer sit around forever:
+
+```rust
+let mut since_prune = 0;
+while let Some(event) = reader.next_event() {
+    if let Ok(event) = event {
+        tree.apply(event);
+    }
+    since_prune += 1;
+    if since_prune >= 10_000 {
+        tree.prune_finished();
+        since_prune = 0;
+    }
+}
+```
+
+Pruning invalidates indices into whatever it removed, so only treat an
+index as valid if you got it from `roots()` or a node's `children`
+after the most recent prune.
+
 ## What this doesn't do (yet)
 
-The tree itself still grows for the lifetime of the program — once a
-subtree finishes, nothing prunes it. For a process that runs for the
-life of the log, that's unavoidable; for short-lived subtrees under a
-long-lived root, it's wasted memory. See the roadmap for where this is
-headed.
+Process names are split on whitespace with no escaping, so a name
+containing a space (rare, but real for some interpreters and scripts)
+will be truncated at the first space and the rest silently dropped as
+an extra field.
 
 ## License
 
