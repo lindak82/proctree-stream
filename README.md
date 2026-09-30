@@ -106,12 +106,18 @@ Pruning invalidates indices into whatever it removed, so only treat an
 index as valid if you got it from `roots()` or a node's `children`
 after the most recent prune.
 
-## What this doesn't do (yet)
+## Names with spaces
 
-Process names are split on whitespace with no escaping, so a name
-containing a space (rare, but real for some interpreters and scripts)
-will be truncated at the first space and the rest silently dropped as
-an extra field.
+A name containing whitespace, a quote or a backslash goes in double
+quotes, with `\"`, `\\`, `\n`, `\r` and `\t` as escapes:
+
+```
+start 88 1 50 "python my script.py"
+```
+
+An unquoted name is still a single token. `ProcessEvent` implements
+`Display` using the same rules, so writing an event and parsing it back
+gives the same name.
 
 ## License
 
